@@ -1,11 +1,10 @@
-import PartySocket from 'https://esm.sh/partysocket';
-
 // ─── Transport ────────────────────────────────────────────────────────────────
-const PARTYKIT_HOST = window.location.hostname === 'localhost'
-  ? window.location.host
-  : 'sesh.YOUR_USERNAME.partykit.dev';
+const WS_URL = window.location.hostname === 'localhost'
+  ? `ws://${window.location.hostname}:8080`
+  : 'wss://join-sesh.fly.dev';
 
-const socket = new PartySocket({ host: PARTYKIT_HOST, room: 'main' });
+const socket = new WebSocket(WS_URL);
+socket.addEventListener('close', () => setTimeout(() => window.location.reload(), 1500));
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let myUserId = null;
@@ -149,7 +148,9 @@ function attemptJoin() {
 
 // ─── Message dispatch ─────────────────────────────────────────────────────────
 function send(type, payload = {}) {
-  socket.send(JSON.stringify({ type, ...payload }));
+  if (socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ type, ...payload }));
+  }
 }
 
 const handlers = {};

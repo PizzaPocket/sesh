@@ -1,0 +1,28 @@
+# fly.toml app configuration file generated for join-sesh on 2026-03-07T20:01:45+08:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'join-sesh'
+primary_region = 'iad'
+
+[build]
+
+[env]
+  DATA_FILE = '/data/state.json'
+
+[[mounts]]
+  source = 'sesh_data'
+  destination = '/data'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[vm]]
+  memory = '1gb'
+  cpus = 1
+  memory_mb = 1024
