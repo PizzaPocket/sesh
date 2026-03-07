@@ -286,7 +286,7 @@ document.addEventListener('mousedown', (e) => {
     function jhTick() {
       const col = Math.floor(mouseX / 32);
       const row = Math.floor(mouseY / 32);
-      send('grid-click-left', { col, row, count: 1 });
+      send('grid-click-left', { col, row, count: 5 });
       jackhammerDurability--;
       if (jackhammerDurability <= 0) {
         hasJackhammer = false;
@@ -305,7 +305,7 @@ document.addEventListener('mousedown', (e) => {
     function rgTick() {
       const col = Math.floor(mouseX / 32);
       const row = Math.floor(mouseY / 32);
-      send('grid-click-right', { col, row, count: 1 });
+      send('grid-click-right', { col, row, count: 5 });
       rayGunDurability--;
       if (rayGunDurability <= 0) {
         hasRayGun = false;
@@ -414,8 +414,9 @@ handlers['grid-update'] = ({ col, row, r, g, b, userId: uid, action, count, blas
       setTimeout(() => spawnRipple(col * 32 + 16, row * 32 + 16, myColor), delay);
       if ((blastIdx ?? 0) === 0) setTimeout(() => spawnSquare(col * 32 + 16, row * 32 + 16, myColor), delay);
       // Spawn a particle per mined unit from this cell (capped at 5)
+      // TNT blasts neutralise any tier 3 tools they would have uncovered
       const n = Math.min(count ?? 1, 5);
-      for (let i = 0; i < n; i++) spawnMineParticle(col, row, delay + i * 20);
+      for (let i = 0; i < n; i++) spawnMineParticle(col, row, delay + i * 20, ['tnt', 'flashbang']);
 
     } else if (action === 'place') {
       const n = Math.min(count ?? 1, 10);
@@ -491,14 +492,14 @@ function spawnSquare(cx, cy, color) {
 }
 
 // ─── Tool drop ────────────────────────────────────────────────────────────────
-// Weights: tier 1 (common) = 1.0, tier 2 (uncommon) = 0.35, tier 3 (rare) = 0.12
+// Weights: tier 1 (common) = 1.0, tier 2 (uncommon) = 0.08, tier 3 (rare) = 0.02
 const TOOL_WEIGHTS = {
   pickaxe:    1.00,
   lightbrush: 1.00,
-  jackhammer: 0.35,
-  raygun:     0.35,
-  tnt:        0.12,
-  flashbang:  0.12,
+  jackhammer: 0.08,
+  raygun:     0.08,
+  tnt:        0.02,
+  flashbang:  0.02,
 };
 const TOOL_DROP_CHANCE = 0.03;
 
@@ -564,9 +565,9 @@ function spawnToolDropParticle(col, row, tool) {
 }
 
 // ─── Mine particle ────────────────────────────────────────────────────────────
-function spawnMineParticle(col, row, delay = 0) {
+function spawnMineParticle(col, row, delay = 0, excludeTools = []) {
   // Small chance of dropping a tool instead
-  const drops = availableToolDrops();
+  const drops = availableToolDrops().filter(t => !excludeTools.includes(t));
   if (drops.length > 0 && Math.random() < TOOL_DROP_CHANCE) {
     const tool = pickWeightedTool(drops);
     setTimeout(() => spawnToolDropParticle(col, row, tool), delay);
@@ -660,7 +661,7 @@ function renderToolbar() {
   const add = [];
   if (hasLightBrush)  add.push(toolItem('<kbd>[L]</kbd>ight brush', lightBrushEquipped));
   if (hasRayGun) add.push(toolItem('<kbd>[R]</kbd>ay gun',    rayGunEquipped));
-  if (hasFlashbang) add.push(toolItem('<kbd>[F]</kbd>lash bang', flashbangEquipped));
+  if (hasFlashbang) add.push(toolItem('<kbd>[F]</kbd>lashbang', flashbangEquipped));
   if (add.length > 0) {
     parts.push(sep);
     parts.push(section('LIGHTING', `<span class="tool-group">(${add.join(', ')}) + right click</span>`));
