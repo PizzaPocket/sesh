@@ -647,8 +647,8 @@ function renderToolbar() {
     parts.push(sep);
   }
 
-  // TOOLS section — always shown
-  parts.push(section('TOOLS', `<span class="tool-group"><kbd>"/"</kbd> to chat &nbsp; <kbd>"esc"</kbd> to clear</span>`));
+  // CHAT section — always shown
+  parts.push(section('CHAT', `<span class="tool-group"><kbd>"/"</kbd> to chat &nbsp; <kbd>"esc"</kbd> to clear</span>`));
 
   // LIGHTING section — additive tools, right click (ordered by power)
   const add = [];

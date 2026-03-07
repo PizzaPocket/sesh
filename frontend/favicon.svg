@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Red: top segment -->
+  <path d="M 50 50 L 50 0 A 50 50 0 0 1 93.3 75 Z" fill="#FF0000"/>
+  <!-- Green: bottom-right segment -->
+  <path d="M 50 50 L 93.3 75 A 50 50 0 0 1 6.7 75 Z" fill="#00FF00"/>
+  <!-- Blue: bottom-left segment -->
+  <path d="M 50 50 L 6.7 75 A 50 50 0 0 1 50 0 Z" fill="#0000FF"/>
+</svg>
