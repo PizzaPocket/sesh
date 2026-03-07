@@ -215,13 +215,13 @@ handlers['user-left'] = ({ userId }) => {
 };
 
 // ─── Remote cursor management ─────────────────────────────────────────────────
-function createRemoteCursor(userId, name, color, x = 50, y = 50) {
+function createRemoteCursor(userId, name, color, x = 0, y = 0) {
   if (remoteCursors[userId]) return;
 
   const wrapper = document.createElement('div');
   wrapper.className = 'cursor-wrapper';
-  wrapper.style.left = x + '%';
-  wrapper.style.top  = y + '%';
+  wrapper.style.left = x + 'px';
+  wrapper.style.top  = y + 'px';
 
   wrapper.innerHTML = cursorSVG(color);
 
@@ -248,8 +248,8 @@ function removeRemoteCursor(userId) {
 handlers['cursor-move'] = ({ userId, x, y }) => {
   const cursor = remoteCursors[userId];
   if (!cursor) return;
-  cursor.el.style.left = x + '%';
-  cursor.el.style.top  = y + '%';
+  cursor.el.style.left = x + 'px';
+  cursor.el.style.top  = y + 'px';
 };
 
 let lastMoveSent = 0;
@@ -271,9 +271,7 @@ document.addEventListener('mousemove', (e) => {
   if (!joined) return;
   if (now - lastMoveSent < 30) return;
   lastMoveSent = now;
-  const x = (e.clientX / window.innerWidth)  * 100;
-  const y = (e.clientY / window.innerHeight) * 100;
-  send('cursor-move', { x, y });
+  send('cursor-move', { x: e.clientX, y: e.clientY });
 });
 
 // ─── Grid clicks ──────────────────────────────────────────────────────────────
@@ -457,6 +455,14 @@ function updateInventoryDisplay({ r, g, b }) {
   inventoryCount.textContent = Number(ch).toLocaleString();
 }
 
+handlers['full-reset'] = () => {
+  for (const key of Object.keys(gridState)) delete gridState[key];
+  gridCtx.fillStyle = '#ffffff';
+  gridCtx.fillRect(0, 0, gridCanvas.width, gridCanvas.height);
+  updateInventoryDisplay({ r: 0, g: 0, b: 0 });
+  pendingInventoryData = null;
+};
+
 handlers['inventory-update'] = (data) => {
   pendingInventoryData = data;
   // Update immediately for remote/teammate mining; local particles handle their own update on landing
@@ -488,11 +494,11 @@ function spawnSquare(cx, cy, color) {
 // Weights: tier 1 (common) = 1.0, tier 2 (uncommon) = 0.35, tier 3 (rare) = 0.12
 const TOOL_WEIGHTS = {
   pickaxe:    1.00,
-  brush:      1.00,
+  lightbrush: 1.00,
   jackhammer: 0.35,
   raygun:     0.35,
   tnt:        0.12,
-  bucket:     0.12,
+  flashbang:  0.12,
 };
 const TOOL_DROP_CHANCE = 0.03;
 
@@ -812,9 +818,14 @@ function lockAndSendMessage() {
   const cheats = { 'cheat pickaxe': 'pickaxe', 'cheat jackhammer': 'jackhammer',
                    'cheat tnt': 'tnt', 'cheat flashbang': 'flashbang', 'cheat lightbrush': 'lightbrush',
                    'cheat raygun': 'raygun' };
-  if (cheats[trimmed]) {
-    grantTool(cheats[trimmed]);
+  if (cheats[trimmed.toLowerCase()]) {
+    grantTool(cheats[trimmed.toLowerCase()]);
     renderToolbar();
+    exitChatMode(true);
+    return;
+  }
+  if (trimmed.toLowerCase() === 'godmode reset') {
+    send('godmode-reset');
     exitChatMode(true);
     return;
   }
@@ -885,6 +896,7 @@ handlers['cursor-chat'] = ({ userId, message, state }) => {
     if (!msgSpan) {
       msgSpan = document.createElement('span');
       msgSpan.className = 'nametag-message';
+      msgSpan.style.color = textColorFor(cursor.color);
       inner.appendChild(msgSpan);
     }
     msgSpan.classList.remove('fade-out');
@@ -896,6 +908,7 @@ handlers['cursor-chat'] = ({ userId, message, state }) => {
     if (!msgSpan) {
       msgSpan = document.createElement('span');
       msgSpan.className = 'nametag-message';
+      msgSpan.style.color = textColorFor(cursor.color);
       inner.appendChild(msgSpan);
     }
     msgSpan.textContent = message;

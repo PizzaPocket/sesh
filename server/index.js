@@ -76,7 +76,7 @@ wss.on('connection', (ws) => {
         const name = String(data.name ?? '').slice(0, 24);
         const color = COLORS[colorIndex % COLORS.length];
         colorIndex++;
-        users.set(userId, { name, color, x: 50, y: 50, message: '', messageState: null });
+        users.set(userId, { name, color, x: 0, y: 0, message: '', messageState: null });
         broadcast(JSON.stringify({ type: 'user-joined', userId, name, color }));
         break;
       }
@@ -235,6 +235,13 @@ wss.on('connection', (ws) => {
           broadcast(JSON.stringify({ type: 'inventory-update', ...inventory }));
           saveState();
         }
+        break;
+      }
+      case 'godmode-reset': {
+        grid = {};
+        inventory = { r: 0, g: 0, b: 0 };
+        saveState();
+        broadcast(JSON.stringify({ type: 'full-reset' }));
         break;
       }
     }
