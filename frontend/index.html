@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sesh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@700;800&family=Funnel+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Grid canvas -->
+  <canvas id="grid-canvas"></canvas>
+
+  <!-- Join Modal -->
+  <div id="modal-overlay">
+    <div id="modal">
+      <h1>SESH</h1>
+      <input type="text" id="name-input" placeholder="Your name" maxlength="24" autocomplete="off" spellcheck="false" autofocus>
+      <button id="join-btn">Join</button>
+    </div>
+  </div>
+
+  <!-- Cursor layer: all remote cursors rendered here -->
+  <div id="cursor-layer"></div>
+
+  <!-- Click effects layer -->
+  <div id="effect-layer"></div>
+
+  <!-- Color inspector (top-left) -->
+  <div id="color-inspector" class="hud-pill">
+    <span id="cell-hex">#ffffff</span>
+  </div>
+
+  <!-- Inventory bar (top-center) -->
+  <div id="inventory-bar" class="hud-pill">
+    <span id="inventory-count">0</span>
+  </div>
+
+  <!-- Keyboard hint bar -->
+  <div id="hint-bar" class="hud-pill">
+    <span><kbd>"/"</kbd> to chat</span>
+    <span><kbd>"esc"</kbd> to clear</span>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

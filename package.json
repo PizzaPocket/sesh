@@ -1,0 +1,19 @@
+{
+  "name": "sesh",
+  "version": "1.0.0",
+  "description": "Real-time multi-user cursor tracking",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "partykit dev",
+    "deploy": "partykit deploy"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "partysocket": "^1.1.16",
+    "socket.io": "^4.7.2"
+  },
+  "devDependencies": {
+    "partykit": "^0.0.115"
+  }
+}
