@@ -1,0 +1,7 @@
+# flyctl launch added from .gitignore
+**\node_modules
+**\.partykit
+**\data
+**\.env
+**\.env.local
+fly.toml

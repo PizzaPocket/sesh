@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install)",
+      "Bash(npm install --prefix /c/Users/leona/dev/sesh)",
+      "Bash(cmd /c \"npm install\")",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(npm install --registry https://registry.npmjs.org)",
+      "Bash(npm install --legacy-peer-deps)",
+      "Bash(echo \"DONE: $?\")",
+      "Bash(npm install --save-dev partykit --save partysocket)",
+      "Bash(npm install partykit partysocket)",
+      "Bash(npx partykit dev)",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({k:d[k] for k in [''main'',''module'',''browser'',''exports'',''unpkg'',''jsdelivr''] if k in d}, indent=2\\)\\)\")",
+      "Bash(node -e \"const p=require\\(''./node_modules/partysocket/package.json''\\); console.log\\(JSON.stringify\\({main:p.main,module:p.module,browser:p.browser,unpkg:p.unpkg,jsdelivr:p.jsdelivr},null,2\\)\\)\")",
+      "Bash(netstat -ano)",
+      "Bash(findstr :1999)",
+      "Bash(taskkill /PID 34580 /F)",
+      "Bash(cmd /c \"taskkill /PID 34580 /F\")",
+      "Bash(cmd /c \"taskkill /F /PID 34580\")",
+      "Bash(cmd /c \"wmic process where processid=34580 get name,commandline 2>&1\")",
+      "Bash(cmd /c \"tasklist /FI \"\"PID eq 34580\"\"\")",
+      "Bash(powershell -Command \"Get-Process -Id 34580 | Select-Object Name,Id; Stop-Process -Id 34580 -Force; Write-Host ''killed''\")",
+      "Bash(dir \"C:\\\\Users\\\\leona\\\\.partykit\")",
+      "Bash(dir \"C:\\\\Windows\\\\System32\\\\config\\\\systemprofile\\\\.partykit\")",
+      "Bash(dir \"C:\\\\Users\\\\Administrator\\\\.partykit\")",
+      "Read(//c/Users/leona/.partykit/**)",
+      "Bash(npx partykit deploy)",
+      "Bash(node -e \"require\\(''ws''\\); console.log\\(''ws ok''\\)\")",
+      "Bash(fly deploy)",
+      "Bash(\"$USERPROFILE/.fly/bin/flyctl\" deploy)"
+    ]
+  }
+}
