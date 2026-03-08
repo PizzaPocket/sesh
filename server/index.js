@@ -237,6 +237,15 @@ wss.on('connection', (ws) => {
         }
         break;
       }
+      case 'switch-color': {
+        const user = users.get(userId);
+        if (!user) break;
+        const newColor = COLORS.find(c => c === String(data.color).toUpperCase());
+        if (!newColor) break;
+        user.color = newColor;
+        broadcast(JSON.stringify({ type: 'user-color', userId, color: newColor }));
+        break;
+      }
       case 'godmode-reset': {
         grid = {};
         inventory = { r: 0, g: 0, b: 0 };

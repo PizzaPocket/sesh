@@ -76,7 +76,7 @@ const effectLayer    = document.getElementById('effect-layer');
 const hintBar        = document.getElementById('hint-bar');
 const inventoryBar   = document.getElementById('inventory-bar');
 const inventoryCount = document.getElementById('inventory-count');
-const cellHexEl      = document.getElementById('cell-hex');
+const colorInspector = document.getElementById('color-inspector');
 const gridCanvas     = document.getElementById('grid-canvas');
 const gridCtx        = gridCanvas.getContext('2d');
 
@@ -118,6 +118,33 @@ function textColorFor(bgColor) {
 function rgbToHex(r, g, b) {
   return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
 }
+
+// ─── Color Inspector ──────────────────────────────────────────────────────────
+let inspectorMode = 'rgb';
+let currentCellRGB = { r: 255, g: 255, b: 255 };
+
+function updateInspector(r, g, b) {
+  currentCellRGB = { r, g, b };
+  if (inspectorMode === 'hex') {
+    colorInspector.innerHTML = `<span id="cell-hex">${rgbToHex(r, g, b)}</span>`;
+  } else {
+    const rp = Math.round(r / 255 * 100);
+    const gp = Math.round(g / 255 * 100);
+    const bp = Math.round(b / 255 * 100);
+    colorInspector.innerHTML = `<div class="rgb-bars">
+      <span class="rgb-label">R</span><div class="rgb-bar-track"><div class="rgb-bar-fill" style="width:${rp}%;background:#ff0000"></div></div>
+      <span class="rgb-label">G</span><div class="rgb-bar-track"><div class="rgb-bar-fill" style="width:${gp}%;background:#00ff00"></div></div>
+      <span class="rgb-label">B</span><div class="rgb-bar-track"><div class="rgb-bar-fill" style="width:${bp}%;background:#0000ff"></div></div>
+    </div>`;
+  }
+}
+
+colorInspector.addEventListener('mousedown', e => e.stopPropagation());
+colorInspector.addEventListener('click', e => {
+  e.stopPropagation();
+  inspectorMode = inspectorMode === 'hex' ? 'rgb' : 'hex';
+  updateInspector(currentCellRGB.r, currentCellRGB.g, currentCellRGB.b);
+});
 
 function escHtml(str) {
   return str
@@ -214,6 +241,30 @@ handlers['user-left'] = ({ userId }) => {
   removeRemoteCursor(userId);
 };
 
+handlers['user-color'] = ({ userId, color }) => {
+  if (userId === myUserId) {
+    myColor = color;
+    myCursorEl.innerHTML = cursorSVG(color);
+    const nametag = document.createElement('div');
+    nametag.className = 'nametag';
+    nametag.innerHTML = `<div class="nametag-inner" style="background:${color}"><span class="nametag-name" style="color:${textColorFor(color)}">${escHtml(myName)}</span></div>`;
+    myCursorEl.appendChild(nametag);
+    inventoryBar.style.background = color;
+    inventoryBar.style.color = textColorFor(color);
+    renderToolbar();
+  } else {
+    const cursor = remoteCursors[userId];
+    if (!cursor) return;
+    cursor.color = color;
+    cursor.el.querySelector('svg path').setAttribute('fill', color);
+    const inner = cursor.el.querySelector('.nametag-inner');
+    if (inner) {
+      inner.style.background = color;
+      inner.querySelector('.nametag-name').style.color = textColorFor(color);
+    }
+  }
+};
+
 // ─── Remote cursor management ─────────────────────────────────────────────────
 function createRemoteCursor(userId, name, color, x = 0, y = 0) {
   if (remoteCursors[userId]) return;
@@ -265,7 +316,7 @@ document.addEventListener('mousemove', (e) => {
     const row = Math.floor(e.clientY / 32);
     if (col !== cursorCell.col || row !== cursorCell.row) cursorCell = { col, row };
     const cell = gridState[`${col}_${row}`] ?? { r: 255, g: 255, b: 255 };
-    cellHexEl.textContent = rgbToHex(cell.r, cell.g, cell.b);
+    updateInspector(cell.r, cell.g, cell.b);
   }
 
   if (!joined) return;
@@ -392,7 +443,7 @@ document.addEventListener('contextmenu', (e) => {
     renderToolbar();
   }
 
-  spawnSquare(e.clientX, e.clientY, myColor);
+  spawnSquareIn(e.clientX, e.clientY, myColor);
 });
 
 handlers['grid-update'] = ({ col, row, r, g, b, userId: uid, action, count, blastIdx }) => {
@@ -401,30 +452,29 @@ handlers['grid-update'] = ({ col, row, r, g, b, userId: uid, action, count, blas
   drawCell(col, row, r, g, b);
 
   if (col === cursorCell.col && row === cursorCell.row) {
-    cellHexEl.textContent = rgbToHex(r, g, b);
+    updateInspector(r, g, b);
   }
 
   if (uid === myUserId) {
     if (action === 'mine') {
       const n = Math.min(count ?? 1, 10);
       for (let i = 0; i < n; i++) spawnMineParticle(col, row, i * 20);
+      spawnRipple(col * 32 + 16, row * 32 + 16, myColor);
 
     } else if (action === 'tnt') {
       const delay = (blastIdx ?? 0) * 20;
       setTimeout(() => spawnRipple(col * 32 + 16, row * 32 + 16, myColor), delay);
-      if ((blastIdx ?? 0) === 0) setTimeout(() => spawnSquare(col * 32 + 16, row * 32 + 16, myColor), delay);
-      // Spawn a particle per mined unit from this cell (capped at 5)
-      // TNT blasts neutralise any tier 3 tools they would have uncovered
       const n = Math.min(count ?? 1, 5);
       for (let i = 0; i < n; i++) spawnMineParticle(col, row, delay + i * 20, ['tnt', 'flashbang']);
 
     } else if (action === 'place') {
       const n = Math.min(count ?? 1, 10);
       for (let i = 0; i < n; i++) spawnPlaceParticle(col, row, i * 20);
+      spawnSquareIn(col * 32 + 16, row * 32 + 16, myColor);
 
     } else if (action === 'flashbang') {
       const delay = (blastIdx ?? 0) * 20;
-      setTimeout(() => spawnRipple(col * 32 + 16, row * 32 + 16, myColor), delay);
+      setTimeout(() => spawnSquareIn(col * 32 + 16, row * 32 + 16, myColor), delay);
       spawnPlaceParticle(col, row, delay);
     }
   } else {
@@ -434,14 +484,13 @@ handlers['grid-update'] = ({ col, row, r, g, b, userId: uid, action, count, blas
     if (action === 'tnt') {
       const delay = (blastIdx ?? 0) * 20;
       setTimeout(() => spawnRipple(cx, cy, color), delay);
-      if ((blastIdx ?? 0) === 0) setTimeout(() => spawnSquare(cx, cy, color), delay);
     } else if (action === 'flashbang') {
       const delay = (blastIdx ?? 0) * 20;
-      setTimeout(() => spawnRipple(cx, cy, color), delay);
+      setTimeout(() => spawnSquareIn(cx, cy, color), delay);
     } else if (action === 'place') {
-      spawnSquare(cx, cy, color);
+      spawnSquareIn(cx, cy, color);
     } else {
-      action === 'mine' ? spawnRipple(cx, cy, color) : spawnSquare(cx, cy, color);
+      action === 'mine' ? spawnRipple(cx, cy, color) : spawnSquareIn(cx, cy, color);
     }
   }
 };
@@ -481,9 +530,9 @@ function spawnRipple(cx, cy, color) {
   el.addEventListener('animationend', () => el.remove());
 }
 
-function spawnSquare(cx, cy, color) {
+function spawnSquareIn(cx, cy, color) {
   const el = document.createElement('div');
-  el.className = 'click-effect click-square';
+  el.className = 'click-effect click-square-in';
   el.style.setProperty('--clr', color);
   el.style.left = cx + 'px';
   el.style.top  = cy + 'px';
@@ -492,14 +541,14 @@ function spawnSquare(cx, cy, color) {
 }
 
 // ─── Tool drop ────────────────────────────────────────────────────────────────
-// Weights: tier 1 (common) = 1.0, tier 2 (uncommon) = 0.08, tier 3 (rare) = 0.02
+// Weights: tier 1 (common) = 1.0, tier 2 (uncommon) = 0.005, tier 3 (rare) = 0.0005
 const TOOL_WEIGHTS = {
   pickaxe:    1.00,
   lightbrush: 1.00,
-  jackhammer: 0.08,
-  raygun:     0.08,
-  tnt:        0.02,
-  flashbang:  0.02,
+  jackhammer: 0.005,
+  raygun:     0.005,
+  tnt:        0.0005,
+  flashbang:  0.0005,
 };
 const TOOL_DROP_CHANCE = 0.03;
 
@@ -635,37 +684,39 @@ function renderToolbar() {
   const parts = [];
   const sep = `<div class="toolbar-sep"></div>`;
 
-  function toolItem(label, active) {
+  function toolItem(tool, label, active) {
     const style = active ? `background:${myColor};color:${textColorFor(myColor)}` : '';
-    return `<span class="tool-item${active ? ' active' : ''}" style="${style}">${label}</span>`;
+    return `<span class="tool-item${active ? ' active' : ''}" style="${style}" data-tool="${tool}">${label}</span>`;
   }
 
   function section(label, content) {
     return `<div class="toolbar-section"><span class="section-label">${label}</span>${content}</div>`;
   }
 
-  // MINING section — subtractive tools, left click
+  // DESTROY section — subtractive tools, left click
   const sub = [];
-  if (hasPickaxe)    sub.push(toolItem('<kbd>[P]</kbd>ickaxe',    pickaxeEquipped));
-  if (hasJackhammer) sub.push(toolItem('<kbd>[J]</kbd>ackhammer', jackhammerEquipped));
-  if (hasTNT)        sub.push(toolItem('<kbd>[T]</kbd>NT',        tntEquipped));
-  if (sub.length > 0) {
-    parts.push(section('MINING', `<span class="tool-group">(${sub.join(', ')}) + click</span>`));
-    parts.push(sep);
-  }
+  if (hasPickaxe)    sub.push(toolItem('pickaxe',    '<kbd>[P]</kbd>ickaxe',    pickaxeEquipped));
+  if (hasJackhammer) sub.push(toolItem('jackhammer', '<kbd>[J]</kbd>ackhammer', jackhammerEquipped));
+  if (hasTNT)        sub.push(toolItem('tnt',        '<kbd>[T]</kbd>NT',        tntEquipped));
+  const subContent = sub.length > 0
+    ? `<span class="tool-group">(${sub.join(', ')}) click</span>`
+    : `<span class="tool-group">click</span>`;
+  parts.push(section('DESTROY', subContent));
+  parts.push(sep);
 
   // CHAT section — always shown
   parts.push(section('CHAT', `<span class="tool-group"><kbd>"/"</kbd> to chat &nbsp; <kbd>"esc"</kbd> to clear</span>`));
 
-  // LIGHTING section — additive tools, right click (ordered by power)
+  // RESTORE section — additive tools, right click (ordered by power)
   const add = [];
-  if (hasLightBrush)  add.push(toolItem('<kbd>[L]</kbd>ight brush', lightBrushEquipped));
-  if (hasRayGun) add.push(toolItem('<kbd>[R]</kbd>ay gun',    rayGunEquipped));
-  if (hasFlashbang) add.push(toolItem('<kbd>[F]</kbd>lashbang', flashbangEquipped));
-  if (add.length > 0) {
-    parts.push(sep);
-    parts.push(section('LIGHTING', `<span class="tool-group">(${add.join(', ')}) + right click</span>`));
-  }
+  if (hasLightBrush)  add.push(toolItem('lightbrush', '<kbd>[L]</kbd>ight brush', lightBrushEquipped));
+  if (hasRayGun)      add.push(toolItem('raygun',     '<kbd>[R]</kbd>ay gun',    rayGunEquipped));
+  if (hasFlashbang)   add.push(toolItem('flashbang',  '<kbd>[F]</kbd>lashbang',  flashbangEquipped));
+  const addContent = add.length > 0
+    ? `<span class="tool-group">(${add.join(', ')}) right click</span>`
+    : `<span class="tool-group">right click</span>`;
+  parts.push(sep);
+  parts.push(section('RESTORE', addContent));
 
   hintBar.innerHTML = parts.join('');
 }
@@ -707,6 +758,25 @@ document.addEventListener('keydown', (e) => {
                 tool === 'lightbrush' ? hasLightBrush : hasRayGun;
   if (!hasIt) return;
 
+  const wasEquipped = equippedTool() === tool;
+  unequipAll();
+  if (!wasEquipped) equipTool(tool);
+  renderToolbar();
+});
+
+hintBar.addEventListener('mousedown', (e) => {
+  if (e.target.closest('[data-tool]')) e.stopPropagation();
+});
+
+hintBar.addEventListener('click', (e) => {
+  const item = e.target.closest('[data-tool]');
+  if (!item || !joined) { return; }
+  e.stopPropagation();
+  const tool = item.dataset.tool;
+  const hasIt = tool === 'pickaxe' ? hasPickaxe : tool === 'jackhammer' ? hasJackhammer :
+                tool === 'tnt' ? hasTNT : tool === 'flashbang' ? hasFlashbang :
+                tool === 'lightbrush' ? hasLightBrush : hasRayGun;
+  if (!hasIt) return;
   const wasEquipped = equippedTool() === tool;
   unequipAll();
   if (!wasEquipped) equipTool(tool);
@@ -822,6 +892,12 @@ function lockAndSendMessage() {
   if (cheats[trimmed.toLowerCase()]) {
     grantTool(cheats[trimmed.toLowerCase()]);
     renderToolbar();
+    exitChatMode(true);
+    return;
+  }
+  const teamSwitch = { 'switch red': '#FF0000', 'switch green': '#00FF00', 'switch blue': '#0000FF' };
+  if (teamSwitch[trimmed.toLowerCase()]) {
+    send('switch-color', { color: teamSwitch[trimmed.toLowerCase()] });
     exitChatMode(true);
     return;
   }

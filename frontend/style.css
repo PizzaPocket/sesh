@@ -40,12 +40,9 @@ body.joined { cursor: none; }
   box-shadow: 0 8px 48px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.10);
 }
 
-#modal h1 {
-  font-family: 'Funnel Display', system-ui, sans-serif;
-  font-size: 2.8rem;
-  font-weight: 800;
-  letter-spacing: 0.18em;
-  color: #222222;
+#modal-logo {
+  width: 280px;
+  height: auto;
 }
 
 #modal p {
@@ -106,6 +103,8 @@ body.joined { cursor: none; }
   background: #ffffff;
   opacity: 0;
   transition: opacity 0.3s ease;
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 body.joined #color-inspector { opacity: 1; }
@@ -116,6 +115,33 @@ body.joined #color-inspector { opacity: 1; }
   color: #222222;
   letter-spacing: 0.06em;
   font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+}
+
+.rgb-bars {
+  display: grid;
+  grid-template-columns: auto 72px;
+  gap: 3px 8px;
+  align-items: center;
+}
+
+.rgb-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #222222;
+  line-height: 1;
+}
+
+.rgb-bar-track {
+  width: 72px;
+  height: 8px;
+  background: #e8e8e8;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.rgb-bar-fill {
+  height: 100%;
+  border-radius: 4px;
 }
 
 /* ─── Inventory Bar (top-center) ────────────────────────────────── */
@@ -148,6 +174,7 @@ body.joined #inventory-bar { opacity: 1; }
   transition: opacity 0.3s ease;
   white-space: nowrap;
   flex-wrap: nowrap;
+  pointer-events: auto;
 }
 
 #hint-bar.visible { opacity: 1; }
@@ -190,6 +217,7 @@ body.joined #inventory-bar { opacity: 1; }
   display: flex;
   align-items: flex-start;
   pointer-events: none;
+  width: max-content;
 }
 
 .nametag-inner {
@@ -270,18 +298,17 @@ body.joined #inventory-bar { opacity: 1; }
   100% { transform: translate(-50%, -50%) scale(6);   opacity: 0; }
 }
 
-/* Right click: square pulse */
-.click-square {
-  width: 12px;
-  height: 12px;
+/* Right click / restore: inward rotating square */
+.click-square-in {
+  width: 72px;
+  height: 72px;
   border: 2px solid var(--clr);
-  background: transparent;
-  animation: squareAnim 400ms ease-out forwards;
+  animation: squareInAnim 400ms ease-in forwards;
 }
 
-@keyframes squareAnim {
+@keyframes squareInAnim {
   0%   { transform: translate(-50%, -50%) scale(1) rotate(0deg);   opacity: 1; }
-  100% { transform: translate(-50%, -50%) scale(5) rotate(45deg);  opacity: 0; }
+  100% { transform: translate(-50%, -50%) scale(0) rotate(45deg);  opacity: 0; }
 }
 
 /* ─── Toolbar ───────────────────────────────────────────────────── */
@@ -307,6 +334,7 @@ body.joined #inventory-bar { opacity: 1; }
   flex-shrink: 0;
 }
 
+
 .tool-group {
   display: inline-flex;
   align-items: center;
@@ -318,12 +346,11 @@ body.joined #inventory-bar { opacity: 1; }
   letter-spacing: 0.04em;
   border-radius: 4px;
   transition: background 0.1s ease;
+  cursor: pointer;
+  padding: 1px 6px;
 }
 .tool-item kbd {
   font-weight: 700;
-}
-.tool-item.active {
-  padding: 1px 6px;
 }
 
 /* ─── Mine Particle ─────────────────────────────────────────────── */
