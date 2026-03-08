@@ -45,9 +45,17 @@ body.joined { cursor: none; }
   height: auto;
 }
 
-#modal p {
+#modal-mobile {
+  display: none;
   color: #888;
   font-size: 0.9rem;
+  text-align: center;
+}
+
+/* On touch/mobile devices: hide join form, show message */
+@media (pointer: coarse) {
+  #modal-join { display: none; }
+  #modal-mobile { display: block; }
 }
 
 #name-input {
